@@ -64,12 +64,16 @@ Shader "Unlit/NewUnlitShader 1"
 
 				//half3 col = tex2D (_MainTex, i.uv).rgb;
 				float dx = length(_ObjPos.x-i.worldPos.x);
-				float dy = length(_ObjPos.y-i.worldPos.y);
+				float dy = 0; //length(_ObjPos.y-i.worldPos.y);
 				float dz = length(_ObjPos.z-i.worldPos.z);
 				float dist = (dx*dx+dy*dy+dz*dz)*_Radius;
-				dist = clamp(dist,0,1);
+				//dist = clamp(dist,0,1);
+
+				dist = clamp(1 - dist,0,1);
+				col.a = col.a * dist;
+
 				//col.Albedo = col.rgb; // color is from texture
-				col.a = dist;  // alpha is from distance to the mouse
+				//col.a = 1 -  dist > 0;  // alpha is from distance to the mouse
 
 				return col;
 			}
