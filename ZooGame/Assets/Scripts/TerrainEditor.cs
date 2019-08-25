@@ -8,10 +8,22 @@ public class TerrainEditor : MonoBehaviour {
     Mesh floorMesh;
     Mesh gridMesh;
 
+    //public bool editorEnabled = false;
+
     [Range(-0.4f, 0.4f)]
     public float strength = 0.2f;
     [Range(0, 5)]
     public int range = 0;
+
+    public void ToggleEnabled()
+    {
+        gameObject.SetActive(!isActiveAndEnabled);
+    }
+
+    public void SetEnabled(bool value)
+    {
+        gameObject.SetActive(value);
+    }
 
     // Use this for initialization
     void Start () {
@@ -21,6 +33,9 @@ public class TerrainEditor : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
+
+        if (!isActiveAndEnabled)
+            return;
 
         if (Input.GetMouseButtonDown(0))
         {
@@ -32,7 +47,14 @@ public class TerrainEditor : MonoBehaviour {
             if (Physics.Raycast(ray, out hit, 100))
             {
 
-                List<int> vertexIndices = NearestVertexIndexTo(hit.transform, hit.point, range);
+                int layerMask = 1 << 8;
+                if (Physics.CheckSphere(floor.ClosestIndexPosition(hit.point), floor.gridSquareLength * 0.9f, layerMask))
+                {
+                    Debug.Log("Can't manipulate terrain under buildings!");
+                    return;
+                }
+
+                List<int> vertexIndices = floor.NearestVertexIndicesTo(hit.point, range);
                 ManipulatePoints(vertexIndices, strength);
                 
             }
@@ -56,46 +78,15 @@ public class TerrainEditor : MonoBehaviour {
 
         gridMesh.vertices = gridVertices;
         gridMesh.RecalculateBounds();
+
+        // Moved to onDisable. Kept in case of errors
+        // Should be done after exiting editor
+        //floor.SortVertices();
     }
 
-
-    List<int> NearestVertexIndexTo(Transform target, Vector3 point, int within)
+    private void OnDisable()
     {
-        // convert point to local space
-        point = target.transform.InverseTransformPoint(point);
-
-        List<int> indices = new List<int>();
-        
-        Mesh mesh = target.GetComponent<MeshFilter>().mesh;
-        float minDistanceSqr = Mathf.Infinity;
-        int soloIndex = 0;
-        // scan all vertices to find nearest
-        for (int i = 0; i < mesh.vertices.Length; i++)
-        {
-            if (within == 0)
-            {
-                Vector3 diff = point - mesh.vertices[i];
-                float distSqr = diff.sqrMagnitude;
-                if (distSqr < minDistanceSqr)
-                {
-                    minDistanceSqr = distSqr;
-                    soloIndex = i;
-                }
-            }
-            else
-            {
-                Vector3 diff = point - mesh.vertices[i];
-                float distSqr = diff.sqrMagnitude;
-                if (distSqr < within)
-                {
-                    indices.Add(i);
-                }
-            }
-        }
-
-        if (within == 0)
-            indices.Add(soloIndex);
-
-        return indices;
+        if (floor)
+            floor.SortVertices();
     }
 }

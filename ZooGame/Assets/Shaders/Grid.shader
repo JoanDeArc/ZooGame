@@ -2,7 +2,7 @@
 
 // Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
 
-Shader "Unlit/NewUnlitShader 1"
+Shader "Custom/Grid"
 {
 	Properties
 	{
